@@ -89,7 +89,7 @@ class Hyperparameters:
             'theta': 0.2,
             'epsilon': 1e-8,
             'learning_rate': 5e-5,
-            'embedding_size': 2,
+            'embedding_size': 10,
         })
         
 class Metadata:

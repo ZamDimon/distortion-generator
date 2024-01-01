@@ -2,27 +2,16 @@
 General interface for embedding models.
 """
 
-import logging
 from pathlib import Path
-
+import logging
 import tensorflow as tf
-
-from src.embeddings.hyperparameters import Hyperparameters
 
 class EmbeddingModel:
     """
     Embedding model interface
     """
     
-    def __init__(self, hyperparams: Hyperparameters) -> None:
-        """
-        Initializes the embedding model.
-        
-        Arguments:
-            - hyperparams (Hyperparameters) - hyperparameters for the model
-        """
-        pass
-    
+    @property
     def raw(self) -> tf.keras.models.Model:
         """Returns the initializes model."""
         pass
@@ -31,8 +20,13 @@ class EmbeddingModel:
         """Prints the model summary."""
         pass
     
-    def save(self, base_path: Path) -> None:
-        """Saves the model."""
+    def save(self, path: Path) -> None:
+        """
+        Saves the model.
+        
+        Arguments:
+            - path (Path) - path to the model
+        """
         pass
     
     def print_example_predictions(self, 
@@ -40,6 +34,14 @@ class EmbeddingModel:
                                   X: tf.Tensor, 
                                   y: tf.Tensor,
                                   predictions_number: int=35) -> None:
-        """Prints example predictions."""
+        """
+        Prints example predictions.
+        
+        Arguments:
+            - logger (logging.Logger) - logger
+            - X (tf.Tensor) - images
+            - y (tf.Tensor) - labels
+            - predictions_number (int) - number of example predictions to print
+        """
         pass
     

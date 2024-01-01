@@ -2,11 +2,13 @@
 Package containing the Siamese Neural Network 
 """
 
+import time
+
 import tensorflow as tf
 
 from src.embeddings.hyperparameters import Hyperparameters
 from src.embeddings.generator import TripletGenerator
-from src.datasets import DatasetLoader
+from src.datasets.interface import DatasetLoader
 
 class TripletNetwork:
     """
@@ -30,6 +32,7 @@ class TripletNetwork:
         Siamese Neural Network and summary() output
         """
         
+        self._embedding_model = embedding_model # Saving embedding model
         self._hyperparams = hyperparams # Saving hyperparameters
         self._history = None # At some point we will save the history of the model
         
@@ -83,13 +86,13 @@ class TripletNetwork:
             X_train, 
             y_train, 
             self._hyperparams, 
-            embedding_model=self._model
+            embedding_model=self._embedding_model
         )
         generator_validate = TripletGenerator(
             X_test, 
             y_test, 
             self._hyperparams, 
-            embedding_model=self._model
+            embedding_model=self._embedding_model
         )
 
         self._history = self._model.fit(

@@ -4,6 +4,7 @@ Package responsible for PCA analysis
 
 from pathlib import Path
 
+import matplotlib as mpl
 from matplotlib import pyplot
 
 import numpy as np
@@ -68,6 +69,8 @@ class PCAPlotter:
             - save_path (Path) - path to save the plot
         """
 
+        mpl.rcParams['figure.dpi'] = 300 # For high resolution
+        
         # Launching PCA
         pca = PCA(n_components=3)
         pca = sklearn.decomposition.PCA(n_components=3)

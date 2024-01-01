@@ -42,6 +42,7 @@ class MNISTEmbeddingModel:
         ])
         self._hyperparams = hyperparams
     
+    @property
     def raw(self) -> tf.keras.models.Model:
         """
         Returns the model.
@@ -56,15 +57,15 @@ class MNISTEmbeddingModel:
         
         self._model.summary()
         
-    def save(self, base_path: Path) -> None:
+    def save(self, path: Path) -> None:
         """
         Saves the model.
         
         Arguments:
-            - base_path (Path) - path to the model
+            - path (Path) - path to the model
         """
         
-        self._model.save(base_path / f"{self._hyperparams.meta.version}_{self._hyperparams.meta.subversion}")
+        self._model.save(path)
         
     def print_example_predictions(self, 
                                   logger: logging.Logger,

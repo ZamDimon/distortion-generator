@@ -5,7 +5,9 @@ Package responsible for displaying the training history
 from typing import List
 from pathlib import Path
 
+import numpy as np
 import tensorflow as tf
+import matplotlib as mpl
 from matplotlib import pyplot
 
 class Historian:
@@ -38,6 +40,8 @@ class Historian:
             - save_path (Path, optional) - path to save the history. Defaults to None.
         """
         
+        mpl.rcParams['figure.dpi'] = 300 # For high resolution
+        
         # If keys_legend is not provided, use keys_to_display
         if keys_legend is None:
             keys_legend = keys_to_display
@@ -47,8 +51,13 @@ class Historian:
         # Summarize history for loss in a plot
         pyplot.style.use('default')
         pyplot.grid()
-        for key in keys_to_display:
-            pyplot.plot(self._history.history[key])
+        
+        # Plotting each curve        
+        cmap = pyplot.get_cmap('rainbow')
+        colors = [cmap(i) for i in np.linspace(0, 1, len(keys_to_display))]
+
+        for key, color in zip(keys_to_display, colors):
+            pyplot.plot(self._history.history[key], linewidth=2.5, color=color)
 
         pyplot.title(title)
         pyplot.ylabel('Loss')

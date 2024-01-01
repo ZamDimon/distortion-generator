@@ -39,6 +39,7 @@ class EmbeddingTrainer:
     def train(self, 
               model_save_path: Path = Path('./models'),
               history_save_path: Path = Path('./images/embedding'),
+              pca_save_path: Path = Path('./images/pca')
               ) -> None:
         """
         Trains the embedding model.
@@ -48,13 +49,13 @@ class EmbeddingTrainer:
             - history_save_path (Path) - path to the history file. If None, the history will not be saved. Defaults to None
         """
         
-        triplet_network = TripletNetwork(self._embedding_model.raw(), self._hyperparams)
+        triplet_network = TripletNetwork(self._embedding_model.raw, self._hyperparams)
         self._logger.info('Training the triplet network...')
         triplet_network.train(self._dataset_loader)
         
         self._logger.info('Training is successful. Saving the model...')
         if model_save_path is not None:
-            self._embedding_model.save(self._hyperparams.model_save_path)        
+            self._embedding_model.save(model_save_path)        
         
         self._logger.info('Successfully saved the model. Displaying the model history...')
         history = triplet_network.get_history()
@@ -65,7 +66,8 @@ class EmbeddingTrainer:
         
         self._logger.info('Successfully displayed the model history. Displaying PCA plot...')
         _, (X_test, y_test) = self._dataset_loader.get()
-        pca_plotter = PCAPlotter(X_test, y_test)
-        pca_plotter.plot(save_path=self._hyperparams.pca_plot_save_path)
+        X_test_embedding = self._embedding_model.raw.predict(X_test)
+        pca_plotter = PCAPlotter(X_test_embedding, y_test)
+        pca_plotter.plot(save_path=pca_save_path)
         
         
