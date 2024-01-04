@@ -6,7 +6,7 @@ using generator (which implements tf.keras.utils.Sequence).
 import tensorflow as tf
 import numpy as np
 
-from src.embeddings.hyperparameters import Hyperparameters
+from src.embeddings.hyperparameters import EmbeddingHyperparameters
 
 
 class TripletGenerator(tf.keras.utils.Sequence):
@@ -17,7 +17,7 @@ class TripletGenerator(tf.keras.utils.Sequence):
     def __init__(self, 
                  X: np.ndarray, 
                  y: np.ndarray, 
-                 hyperparams: Hyperparameters,
+                 hyperparams: EmbeddingHyperparameters,
                  embedding_model: tf.keras.models.Model) -> None:
         """
         Initializes triplets generator. 

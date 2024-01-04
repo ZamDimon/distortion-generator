@@ -1,1 +1,0 @@
-{"version": "v1.5", "threshold": 0.1, "lambda_img": -0.1, "lambda_emb": 1.0, "learning_rate": 0.0001, "epochs": 20, "batch_size": 64, "validation_split": 0.2}

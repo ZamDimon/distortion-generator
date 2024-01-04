@@ -2,8 +2,9 @@
 General interface for embedding models.
 """
 
+from __future__ import annotations
 from pathlib import Path
-import logging
+
 import tensorflow as tf
 
 class EmbeddingModel:
@@ -14,11 +15,11 @@ class EmbeddingModel:
     @property
     def raw(self) -> tf.keras.models.Model:
         """Returns the initializes model."""
-        pass
+        return self._model
     
     def summary(self) -> None:
         """Prints the model summary."""
-        pass
+        self.raw.summary()
     
     def save(self, path: Path) -> None:
         """
@@ -27,21 +28,24 @@ class EmbeddingModel:
         Arguments:
             - path (Path) - path to the model
         """
-        pass
+        self.raw.save(path)
     
-    def print_example_predictions(self, 
-                                  logger: logging.Logger,
-                                  X: tf.Tensor, 
-                                  y: tf.Tensor,
-                                  predictions_number: int=35) -> None:
+    @classmethod
+    def from_path(cls, path: Path, trainable=False) -> EmbeddingModel:
         """
-        Prints example predictions.
+        Loads the model.
         
         Arguments:
-            - logger (logging.Logger) - logger
-            - X (tf.Tensor) - images
-            - y (tf.Tensor) - labels
-            - predictions_number (int) - number of example predictions to print
+            - path (Path) - path to the model
+            - trainable (bool) - whether the model should be trainable
         """
-        pass
+        
+        model = cls.__new__(cls)
+        super(EmbeddingModel, model).__init__()
+        
+        model._model = tf.keras.models.load_model(path)
+        model._model._name = 'embedding'
+        model._model.trainable = trainable
+  
+        return model
     

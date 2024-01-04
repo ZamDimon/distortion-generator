@@ -4,18 +4,18 @@ Module with the embedding model for the MNIST dataset.
 
 from __future__ import annotations
 from pathlib import Path
-import logging
 
 import tensorflow as tf
 
-from src.embeddings.hyperparameters import Hyperparameters
+from src.embeddings.models.interface import EmbeddingModel
+from src.embeddings.hyperparameters import EmbeddingHyperparameters
 
-class MNISTEmbeddingModel:
+class MNISTEmbeddingModel(EmbeddingModel):
     """
     Embedding model for the MNIST dataset.
     """
     
-    def __init__(self, hyperparams: Hyperparameters) -> None:
+    def __init__(self, hyperparams: EmbeddingHyperparameters) -> None:
         """
         Embedding model is a target model that we need to train to make predictions.
         
@@ -44,45 +44,14 @@ class MNISTEmbeddingModel:
     
     @property
     def raw(self) -> tf.keras.models.Model:
-        """
-        Returns the model.
-        """
-        
         return self._model
     
     def summary(self) -> None:
-        """
-        Prints the model summary.
-        """
-        
-        self._model.summary()
+        super().summary()
         
     def save(self, path: Path) -> None:
-        """
-        Saves the model.
-        
-        Arguments:
-            - path (Path) - path to the model
-        """
-        
-        self._model.save(path)
-        
-    def print_example_predictions(self, 
-                                  logger: logging.Logger,
-                                  X: tf.Tensor, 
-                                  y: tf.Tensor,
-                                  predictions_number: int=35) -> None:
-        """
-        Shows example predictions.
-        
-        Arguments:
-            - logger (logging.Logger) - logger for printing
-            - X (tf.Tensor) - images
-            - y (tf.Tensor) - labels
-            - predictions_number (int) - number of predictions to show
-        """
-        
-        predictions = self._model.predict(X[:predictions_number])
-        for (label, prediction) in sorted(zip(y[:predictions_number], predictions), key=lambda x: x[0]):
-            logger.info(f'{label}: {prediction}')
-
+        super().save(path)
+    
+    @classmethod
+    def from_path(cls, path: Path, trainable=False) -> MNISTEmbeddingModel:
+        return super().from_path(path, trainable)

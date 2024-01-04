@@ -13,12 +13,17 @@ class MNISTLoader(DatasetLoader):
     MNIST dataset loader.
     """
     
-    def __init__(self) -> None:
+    def __init__(self, expand_dims=False) -> None:
+        """ Initializes a MNIST Loader
+
+        Args:
+            expand_dims (bool, optional): Whether to expand dims of a MNIST dataset. Defaults to False.
+        """
         # Load the MNIST dataset and normalize it
         (X_train, y_train), (X_test, y_test) = mnist.load_data()
-        self._X_train = preprocess_images(X_train)
+        self._X_train = preprocess_images(X_train, expand_dims=expand_dims)
         self._y_train = y_train
-        self._X_test = preprocess_images(X_test)
+        self._X_test = preprocess_images(X_test, expand_dims=expand_dims)
         self._y_test = y_test
     
     def get(self) -> Dataset:

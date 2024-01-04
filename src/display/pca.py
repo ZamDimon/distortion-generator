@@ -20,28 +20,33 @@ class PCAPlotter:
     PYPLOT_THEME = 'default'
     FIG_SIZE = (10,8)
     
-    def __init__(self, X, y) -> None:
+    def __init__(self, 
+                 X: np.ndarray, 
+                 y: np.ndarray,
+                 labels_to_display: np.ndarray = None) -> None:
         """
         Creates an instance of PCAPlotter. 
         
         Args:
             - X (np.ndarray): The embedding vectors.
             - y (np.ndarray): The labels.
+            - labels_to_display (np.ndarray): The labels to display. If None, all labels will be displayed. Defaults to None
         """
         
         # Saving data        
         self._X = X
         self._y = y
-        self._y_unique = np.unique(y)
+        self._labels_to_display = np.unique(y) if labels_to_display is None else labels_to_display
         
         X_batches, color_indeces = [], []
-        for i, y_unique in enumerate(self._y_unique):
-            X_batch = [X for X, y in zip(X, y) if y_unique == y]
+        for i, label_to_display in enumerate(self._labels_to_display):
+            X_batch = [x for x, label in zip(X, y) if label == label_to_display]
             X_batches.append(X_batch)
             color_indeces.append([i] * len(X_batch))
         
-        self._init_cmap(len(self._y_unique))
+        self._init_cmap(len(self._labels_to_display))
         self._X_batches = X_batches
+        self._X_flatenned = [item for batch in X_batches for item in batch]
         self._color_indeces = color_indeces
     
     def _init_cmap(self, number: int) -> None:
@@ -74,7 +79,7 @@ class PCAPlotter:
         # Launching PCA
         pca = PCA(n_components=3)
         pca = sklearn.decomposition.PCA(n_components=3)
-        batch_scaled = sklearn.preprocessing.StandardScaler().fit_transform(self._X)
+        batch_scaled = sklearn.preprocessing.StandardScaler().fit_transform(self._X_flatenned)
         pca_features = pca.fit_transform(batch_scaled)
 
         # Getting scaled features
@@ -90,7 +95,7 @@ class PCAPlotter:
         _from, _to = 0, len(self._X_batches[0])
         for i in range(len(self._X_batches)):
             ax.scatter3D(x_data[_from:_to], y_data[_from:_to], z_data[_from:_to], 
-                         c=self._get_color(i), label=f'Number {i}')
+                         c=self._get_color(i), label=f'Number {self._labels_to_display[i]}')
             
             if i == len(self._X_batches) - 1: break
             

@@ -1,0 +1,16 @@
+{
+    "meta": {
+        "version": "1",
+        "subversion": "1"
+    },
+    "input_shape": [
+        28,
+        28
+    ],
+    "threshold": 0.3,
+    "pi_emb": 0.9,
+    "learning_rate": 0.0001,
+    "epochs": 2,
+    "batch_size": 64,
+    "validation_split": 0.2
+}

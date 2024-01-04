@@ -1,5 +1,5 @@
 """
-Package responsible for the hyperparameters of the embedding model.
+Package responsible for the EmbeddingHyperparameters of the embedding model.
 """
 
 from __future__ import annotations
@@ -8,9 +8,9 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any
 
-class Hyperparameters:
+class EmbeddingHyperparameters:
     """
-    Class containing the hyperparameters for the embedding model.
+    Class containing the EmbeddingHyperparameters for the embedding model.
     """
     
     _PARAMS_LIST: List[str] = [
@@ -29,10 +29,10 @@ class Hyperparameters:
     
     def __init__(self, json_path: Path) -> None:
         """
-        Initializes the hyperparameters and asserts that the file is properly configures.
+        Initializes the EmbeddingHyperparameters and asserts that the file is properly configures.
         
         Args:
-            json_path (Path): Path to the JSON file containing the hyperparameters.
+            json_path (Path): Path to the JSON file containing the EmbeddingHyperparameters.
         """
         
         with open(str(json_path), 'r') as json_file:
@@ -41,9 +41,9 @@ class Hyperparameters:
             self._dictionary['meta'] = metadata
     
     @classmethod
-    def from_dictionary(cls, dictionary: Dict[str, Any]) -> Hyperparameters:
+    def from_dictionary(cls, dictionary: Dict[str, Any]) -> EmbeddingHyperparameters:
         hyperparams = cls.__new__(cls)
-        super(Hyperparameters, hyperparams).__init__()
+        super(EmbeddingHyperparameters, hyperparams).__init__()
         cls._dictionary = dictionary
         return cls
             
@@ -54,6 +54,19 @@ class Hyperparameters:
         
         return self._dictionary
     
+    def save(self, path: Path) -> None:
+        """
+        Saves the EmbeddingHyperparameters to the JSON file.
+        
+        Args:
+            path (Path): The path to the JSON file.
+        """
+        
+        with open(str(path), 'w') as json_file:
+            dictionary_to_save = self._dictionary.copy()
+            dictionary_to_save['meta'] = self._dictionary['meta'].raw()
+            json_file.write(json.dumps(dictionary_to_save, indent=4))
+    
     def __getattr__(self, name: str) -> Any:
         """
         Returns the value of the attribute.
@@ -62,22 +75,22 @@ class Hyperparameters:
             name (str): The name of the attribute.
         """
         
-        if name not in Hyperparameters._PARAMS_LIST:
+        if name not in EmbeddingHyperparameters._PARAMS_LIST:
             raise AttributeError(f'Attribute {name} not found')
         
         if name in self._dictionary:
             return self._dictionary[name]
         
-        default_hyperparams = Hyperparameters.default()
+        default_hyperparams = EmbeddingHyperparameters.default()
         return default_hyperparams._dictionary[name]
     
     @staticmethod
-    def default() -> Hyperparameters:
+    def default() -> EmbeddingHyperparameters:
         """
-        Returns the default hyperparameters.
+        Returns the default EmbeddingHyperparameters.
         """
         
-        return Hyperparameters.from_dictionary({
+        return EmbeddingHyperparameters.from_dictionary({
             'meta': Metadata.default(),
             'input_shape': (28,28),
             'hidden_layer_size': 2048,

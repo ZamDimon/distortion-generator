@@ -2,11 +2,9 @@
 Package containing the Siamese Neural Network 
 """
 
-import time
-
 import tensorflow as tf
 
-from src.embeddings.hyperparameters import Hyperparameters
+from src.embeddings.hyperparameters import EmbeddingHyperparameters
 from src.embeddings.generator import TripletGenerator
 from src.datasets.interface import DatasetLoader
 
@@ -20,7 +18,7 @@ class TripletNetwork:
     
     def __init__(self, 
                  embedding_model: tf.keras.models.Model, 
-                 hyperparams: Hyperparameters):
+                 hyperparams: EmbeddingHyperparameters):
         """
         Initializes an instance of a triplet network.
         
@@ -40,9 +38,9 @@ class TripletNetwork:
         input_positive = tf.keras.layers.Input(shape=hyperparams.input_shape)
         input_negative = tf.keras.layers.Input(shape=hyperparams.input_shape)
 
-        embedding_anchor = embedding_model(input_anchor)
-        embedding_positive = embedding_model(input_positive)
-        embedding_negative = embedding_model(input_negative)
+        embedding_anchor = self._embedding_model(input_anchor)
+        embedding_positive = self._embedding_model(input_positive)
+        embedding_negative = self._embedding_model(input_negative)
 
         output = tf.keras.layers.concatenate(
             [embedding_anchor, 
@@ -50,7 +48,7 @@ class TripletNetwork:
             embedding_negative], axis=1)
         
         triplet_network = tf.keras.models.Model([input_anchor, input_positive, input_negative], output)
-        self._model = triplet_network
+        self._triplet_model = triplet_network
     
     def _triplet_distance_loss(self, _, y_predicted) -> tf.Tensor:
         """
@@ -79,7 +77,7 @@ class TripletNetwork:
         
         # We use legacy Adam optimizer since... well... M1 Macs don't support the new one
         optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=self._hyperparams.learning_rate)
-        self._model.compile(loss=self._triplet_distance_loss, optimizer=optimizer)
+        self._triplet_model.compile(loss=self._triplet_distance_loss, optimizer=optimizer)
         
         (X_train, y_train), (X_test, y_test) = dataset.get()
         generator_train = TripletGenerator(
@@ -95,13 +93,20 @@ class TripletNetwork:
             embedding_model=self._embedding_model
         )
 
-        self._history = self._model.fit(
+        self._history = self._triplet_model.fit(
             generator_train,
             epochs=self._hyperparams.epochs,
             verbose=1,
             validation_data=generator_validate,
             validation_steps=len(y_test)//self._hyperparams.batch_size
         )
+
+    def get_embedding_model(self) -> tf.keras.models.Model:
+        """
+        Returns the trained embedding model
+        """
+  
+        return self._embedding_model
     
     def get_history(self) -> tf.keras.callbacks.History:
         """
