@@ -68,7 +68,7 @@ class GeneratorTrainer:
         
         if model_save_path is not None:
             self._logger.info('Saving the model...')
-            self._embedding_model.save(model_save_path)
+            self._generator_model.save(model_save_path)
             self._logger.info('Successfully saved the model')        
         
         if history_save_path is not None:

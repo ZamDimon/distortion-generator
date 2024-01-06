@@ -2,6 +2,7 @@
 Package responsible for PCA analysis
 """
 
+from typing import List
 from pathlib import Path
 
 import matplotlib as mpl
@@ -23,7 +24,8 @@ class PCAPlotter:
     def __init__(self, 
                  X: np.ndarray, 
                  y: np.ndarray,
-                 labels_to_display: np.ndarray = None) -> None:
+                 labels_to_display: np.ndarray = None,
+                 colors_to_display: List[str] = None) -> None:
         """
         Creates an instance of PCAPlotter. 
         
@@ -31,11 +33,15 @@ class PCAPlotter:
             - X (np.ndarray): The embedding vectors.
             - y (np.ndarray): The labels.
             - labels_to_display (np.ndarray): The labels to display. If None, all labels will be displayed. Defaults to None
+            - colors_to_display (List[str]): The colors to display. If None, the default colors will be used. Defaults to None
         """
+        
+        assert len(X) == len(y), 'The number of images and labels must be the same'
         
         # Saving data        
         self._X = X
         self._y = y
+        self._colors_to_display = colors_to_display
         self._labels_to_display = np.unique(y) if labels_to_display is None else labels_to_display
         
         X_batches, color_indeces = [], []
@@ -63,8 +69,10 @@ class PCAPlotter:
         Args:
             - index (int): The index of the color.
         """
+        if self._colors_to_display is None:
+            return self._cmap[index]    
         
-        return self._cmap[index]
+        return self._colors_to_display[index]
     
     def plot(self, save_path: Path = None) -> None:
         """
@@ -95,7 +103,7 @@ class PCAPlotter:
         _from, _to = 0, len(self._X_batches[0])
         for i in range(len(self._X_batches)):
             ax.scatter3D(x_data[_from:_to], y_data[_from:_to], z_data[_from:_to], 
-                         c=self._get_color(i), label=f'Number {self._labels_to_display[i]}')
+                         c=self._get_color(i), label=f'{self._labels_to_display[i]}')
             
             if i == len(self._X_batches) - 1: break
             
