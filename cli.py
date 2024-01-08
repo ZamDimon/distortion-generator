@@ -29,6 +29,8 @@ from src.generator.hyperparameters import GeneratorHyperparameters
 from src.generator.models.mnist import MNISTGeneratorModel
 from src.generator.training import GeneratorTrainer
 
+from src.evaluation.generator import GeneratorEvaluator
+
 @app.command()
 def train_embedding_model(
     hyperparams_path: Annotated[Path, typer.Option(help='Path to the hyperparameters file')] = Path('./hyperparams_embedding.json'),
@@ -37,6 +39,18 @@ def train_embedding_model(
     pca_save_path: Annotated[Path, typer.Option(help='Path to the PCA plot file')] = None,
     verbose: Annotated[int, typer.Option(help='Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug')] = 1,
 ) -> None:
+    """
+    Train the embedding model and save it. After the training is successful, the PCA
+    plot is generated and saved together with the model's weight and history.
+    
+    Parameters:
+        - hyperparams_path (str): Path to the hyperparameters file. Defaults to './hyperparams_embedding.json'
+        - model_save_path (str): Path to the model file. Defaults to './models/embedding/v{hyperparams.meta.version}.{hyperparams.meta.subversion}'
+        - history_path (str): Path to the history file. Defaults to './images/embedding/v{hyperparams.meta.version}.{hyperparams.meta.subversion}/history.png'
+        - pca_save_path (str): Path to the PCA plot file. Defaults to './images/embedding/v{hyperparams.meta.version}.{hyperparams.meta.subversion}/pca.png'
+        - verbose (int): Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug. Defaults to 1
+    """
+    
     verbose = VerboseMode(verbose)
     logger = create_logger(verbose)
     
@@ -93,6 +107,19 @@ def train_generator_model(
     image_base_path: Annotated[Path, typer.Option(help='Path where to save images')] = None,
     verbose: Annotated[int, typer.Option(help='Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug')] = 1,
 ) -> None:
+    """
+    Train the generator model and save it. After the training is successful, the
+    example images are generated and saved together with the model's weight and history.
+    
+    Parameters:
+        - embedding_model_path (str): Path to the embedding model file
+        - hyperparams_path (str): Path to the hyperparameters file. Defaults to './hyperparams_generator.json'
+        - model_save_path (str): Path to the model file. Defaults to './models/generator/v{hyperparams.meta.version}.{hyperparams.meta.subversion}'
+        - history_path (str): Path to the history file. Defaults to './images/generator/v{hyperparams.meta.version}.{hyperparams.meta.subversion}/history.png'
+        - image_base_path (str): Path where to save images. Defaults to './images/generator/v{hyperparams.meta.version}.{hyperparams.meta.subversion}'
+        - verbose (int): Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug. Defaults to 1
+    """
+    
     verbose = VerboseMode(verbose)
     logger = create_logger(verbose)
     
@@ -147,13 +174,29 @@ def train_generator_model(
     logger.info('Loader successfully finished the training process. Exiting...')
 
 @app.command()
-def pca_generator_embedding(
+def show_pca_comparison(
     embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')],
     generator_model_path: Annotated[Path, typer.Option(help='Path to the generator model file')],
     pca_save_path: Annotated[Path, typer.Option(help='Path to the PCA plot file')] = None,
     classes_to_display: Annotated[int, typer.Option(help='Number of classes to display. Defaults to 3')] = 3,
     verbose: Annotated[int, typer.Option(help='Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug')] = 1,
 ) -> None:
+    """
+    This command does several things:
+      
+    1. Loads the dataset.
+    2. Find embeddings of real images from the dataset itself.
+    3. Find embeddings of generated images from the generator model.
+    4. Plot the PCA graph of both embeddings.
+    
+    Arguments:
+        - embedding_model_path (str): Path to the embedding model file
+        - generator_model_path (str): Path to the generator model file
+        - pca_save_path (str): Path to the PCA plot file. Defaults to './images/evaluation/pca_embedding_{embedding_hyperparams.meta.version}.{embedding_hyperparams.meta.subversion}_generator_{generator_hyperparams.meta.version}.{generator_hyperparams.meta.subversion}.png'
+        - classes_to_display (int): Number of classes to display. Defaults to 3
+        - verbose (int): Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug. Defaults to 1.
+    """
+    
     verbose = VerboseMode(verbose)
     logger = create_logger(verbose)
     
@@ -216,6 +259,111 @@ def pca_generator_embedding(
     pca.plot(save_path=pca_save_path)
     logger.info('Successfully launched PCA. Plotting...')
 
+@app.command()
+def analyze_generator_distances(
+    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')],
+    generator_model_path: Annotated[Path, typer.Option(help='Path to the generator model file')],
+    verbose: Annotated[int, typer.Option(help='Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug')] = 1,
+) -> None:
+    """
+    Evaluates the generator model by:
+        - Taking a random pair of real images with the same label and evaluating the distance between them
+        - Taking a random pair of generated images with the same label and evaluating the distance between them
+        - Taking a random pair of real and generated images with the same label and evaluating the distance between them
+        
+    Prints the results using rich library.
+    
+    Arguments:
+        - embedding_model_path (str): Path to the embedding model file
+        - generator_model_path (str): Path to the generator model file
+        - verbose (int): Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug. Defaults to 1.
+    """
+    
+    verbose = VerboseMode(verbose)
+    logger = create_logger(verbose)
+    
+    # Getting the dataset
+    logger.info('Loading the MNIST dataset...')
+    mnist_loader = MNISTLoader(expand_dims=True)
+    logger.info('Successfully loaded the MNIST dataset')
+    
+    # Loading the embedding model
+    logger.info('Loading the embedding model...')
+    embedding_model = MNISTEmbeddingModel.from_path(embedding_model_path, trainable=False)
+    logger.info('Successfully loaded the embedding model. Its summary:')
+    embedding_model.summary()
+    
+    # Loading the generator model
+    logger.info('Loading the generator model...')
+    generator_model = MNISTGeneratorModel.from_path(generator_model_path, trainable=False)
+    logger.info('Successfully loaded the generator model. Its summary:')
+    generator_model.summary()
+    
+    # Creating an evaluator
+    logger.info('Creating an evaluator...')
+    # We are explicitly ignoring hyperparameters here because we do not need them
+    evaluator = GeneratorEvaluator(generator_model, embedding_model, mnist_loader, None)
+    evaluator.evaluate_image_distances()
+    
+    logger.info('Successfully evaluated the generator model. Exiting...')
+
+@app.command()
+def analyze_generator_roc(
+    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')],
+    generator_model_path: Annotated[Path, typer.Option(help='Path to the generator model file')],
+    roc_image_path: Annotated[Path, typer.Option(help='Path to save ROC curve in')] = None,
+    classes_to_test: Annotated[int, typer.Option(help='Number of classes to test with')] = 3,
+    verbose: Annotated[int, typer.Option(help='Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug')] = 1,
+) -> None:
+    """
+    This command does several things:
+
+    1. Loads the dataset.
+    2. Find embeddings of real images from the dataset itself.
+    3. Find embeddings of generated images from the generator model.
+    4. Evaluate the generator model by calculating the ROC curve.
+        
+    Arguments:
+        - embedding_model_path (Path): Path to the embedding model file
+        - generator_model_path (Path): Path to the generator model file
+        - roc_image_path(Path, optional)
+        - classes_to_test (int, optional): Number of classes to test authentication system with
+        - verbose (int): Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug. Defaults to 1.    
+    """
+    
+    verbose = VerboseMode(verbose)
+    logger = create_logger(verbose)
+    
+    # Getting the dataset
+    logger.info('Loading the MNIST dataset...')
+    mnist_loader = MNISTLoader(expand_dims=True)
+    logger.info('Successfully loaded the MNIST dataset')
+    
+    # Loading the embedding model
+    logger.info('Loading the embedding model...')
+    embedding_model = MNISTEmbeddingModel.from_path(embedding_model_path, trainable=False)
+    logger.info('Successfully loaded the embedding model. Its summary:')
+    embedding_model.summary()
+    
+    # Loading the generator model
+    logger.info('Loading the generator model...')
+    generator_model = MNISTGeneratorModel.from_path(generator_model_path, trainable=False)
+    logger.info('Successfully loaded the generator model. Its summary:')
+    generator_model.summary()
+
+    # Setting the ROC save path if not provided
+    if roc_image_path is None:
+        embedding_hyperparams = EmbeddingHyperparameters(embedding_model_path / 'hyperparams.json')
+        generator_hyperparams = GeneratorHyperparameters(generator_model_path / 'hyperparams.json')
+        roc_image_path = Path(f'./images/evaluation/roc_embedding_{embedding_hyperparams.meta.version}.{embedding_hyperparams.meta.subversion}_generator_{generator_hyperparams.meta.version}.{generator_hyperparams.meta.subversion}.png')
+    
+    # Creating an evaluator
+    logger.info('Creating an evaluator...')
+    # We are explicitly ignoring hyperparameters here because we do not need them
+    evaluator = GeneratorEvaluator(generator_model, embedding_model, mnist_loader, None)
+    evaluator.build_roc(roc_save_path=roc_image_path, classes_to_test=classes_to_test)
+    
+    logger.info('Successfully evaluated the generator model. Exiting...')
 
 if __name__ == '__main__':
     app()
