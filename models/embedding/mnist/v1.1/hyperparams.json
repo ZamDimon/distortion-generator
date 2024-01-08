@@ -1,0 +1,16 @@
+{
+    "meta": {
+        "version": "1",
+        "subversion": "2"
+    },
+    "input_shape": [28,28],
+    "hidden_layer_size": 2048,
+    "batch_size": 256,
+    "epochs": 80,
+    "alpha": 0.01,
+    "regulizer": 1e-3,
+    "margin": 0.2,
+    "epsilon": 1e-8,
+    "learning_rate": 5e-5,
+    "embedding_size": 10
+}

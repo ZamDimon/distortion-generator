@@ -7,6 +7,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Ignoring the datasets
+dataset/lfw_funneled/*
+!dataset/lfw_funneled/Ari_Fleischer
+!dataset/lfw_funneled/Arnold_Schwarzenegger
+
 # C extensions
 *.so
 
