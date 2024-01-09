@@ -18,6 +18,11 @@ class GeneratorModel:
         """Returns the initializes model."""
         pass
     
+    @property
+    def name(self) -> str:
+        """Returns the name of the model."""
+        return self.raw._name
+    
     def summary(self) -> None:
         """Prints the model summary."""
         self.raw.summary()

@@ -12,6 +12,19 @@ dataset/lfw_funneled/*
 !dataset/lfw_funneled/Ari_Fleischer
 !dataset/lfw_funneled/Arnold_Schwarzenegger
 
+dataset/lfwcrop_color/faces/*
+!dataset/lfwcrop_color/faces/Aaron_Eckhart_0001.ppm
+!dataset/lfwcrop_color/faces/Abbas_Kiarostami_0001.ppm
+
+# Ignoring example images
+images/generator/lfw/v1.1/*
+!images/generator/lfw/v1.1/Arnold_Schwarzenegger
+!images/generator/lfw/v1.1/Britney_Spears
+
+images/generator/lfw/v1.2/*
+!images/generator/lfw/v1.2/Arnold_Schwarzenegger
+!images/generator/lfw/v1.2/Boris_Becker
+
 # C extensions
 *.so
 

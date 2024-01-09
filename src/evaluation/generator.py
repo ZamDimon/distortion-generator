@@ -61,7 +61,8 @@ class GeneratorEvaluator:
                              base_path: Path, 
                              images_to_save: int = 10,
                              image_shape: Tuple[int, int] = (256,256),
-                             labels: List[Any] = None) -> None:
+                             labels: List[Any] = None,
+                             grayscale: bool = True) -> None:
         """
         Saves example images.
         
@@ -70,6 +71,7 @@ class GeneratorEvaluator:
             - images_to_save (int) - number of images to save. Defaults to 10
             - image_shape (Tuple[int, int]) - shape of the image to save. Defaults to (256,256)
             - labels (List[Any]) - list of labels to save. If None, all labels will be saved. Defaults to None
+            - grayscale (bool) - whether to save images in grayscale. Defaults to True
         """
         
         assert len(image_shape) == 2, 'Image shape must be a tuple of 2 elements'
@@ -95,8 +97,17 @@ class GeneratorEvaluator:
             # Saving images
             for i, (x, x_generated) in enumerate(zip(X, X_generated)):
                 real_img_name, generated_img_name = f'{i}_real.png', f'{i}_generated.png'
-                pyplot.imsave(directory_path / real_img_name, np.squeeze(x, axis=-1), cmap='gray')
-                pyplot.imsave(directory_path / generated_img_name, np.squeeze(x_generated, axis=-1), cmap='gray')
+                x = x.numpy()
+                x_generated = x_generated.numpy()
+                
+                if grayscale:
+                    pyplot.imsave(directory_path / real_img_name, np.squeeze(x, axis=-1), cmap='gray')
+                    pyplot.imsave(directory_path / generated_img_name, np.squeeze(x_generated, axis=-1), cmap='gray')
+                    continue
+                
+                pyplot.imsave(directory_path / real_img_name, x)
+                pyplot.imsave(directory_path / generated_img_name, x_generated)   
+                
                 
     @staticmethod
     def _mse_img_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:

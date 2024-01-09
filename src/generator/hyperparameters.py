@@ -104,6 +104,7 @@ class Metadata:
     """
     
     _FIELDS = [
+        'dataset',
         'version',
         'subversion',
     ]
@@ -144,6 +145,7 @@ class Metadata:
         """
         
         return Metadata({
+            'dataset': 'UNKNOWN_DATASET',
             'version': 1,
             'subversion': 1,
         })

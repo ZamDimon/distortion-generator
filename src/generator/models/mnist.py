@@ -62,6 +62,10 @@ class MNISTGeneratorModel(GeneratorModel):
     def raw(self) -> tf.keras.models.Model:
         return self._model
         
+    @property
+    def name(self) -> str:
+        return super().name
+        
     def summary(self) -> None:
         super().summary()
         

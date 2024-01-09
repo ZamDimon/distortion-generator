@@ -46,6 +46,7 @@ class TrainerNetwork:
         
         self._hyperparams = hyperparams # Saving hyperparameters
         self._embedding_model = embedding_model # Saving embedding model
+        self._generator_model = generator # Saving generator model
         self._history = None # At some point we will save the history of the model
         
         # Define the input layer
@@ -117,7 +118,10 @@ class TrainerNetwork:
             case _:
                 raise ValueError(f'Image loss type {image_loss} not supported')
     
-    def train(self, dataset: DatasetLoader, image_loss: ImageLossType = ImageLossType.MSE) -> None:
+    def train(self, 
+              dataset: DatasetLoader, 
+              image_loss: ImageLossType = ImageLossType.MSE,
+              ) -> None:
         """
         Trains the model using the provided dataset.
         
@@ -133,8 +137,8 @@ class TrainerNetwork:
         
         optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=self._hyperparams.learning_rate)
         self._model.compile(optimizer=optimizer, loss={
-            'generator': self._get_loss_by_type(image_loss),
-            'embedding': self._threshold_loss
+            self._generator_model.name: self._get_loss_by_type(image_loss),
+            self._embedding_model.name: self._threshold_loss
         })
         self._history = self._model.fit(
             X_train,
