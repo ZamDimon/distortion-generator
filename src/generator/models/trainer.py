@@ -4,6 +4,8 @@ Contains the Trainer class which, using embedded and generator models,
 trains the generator model.
 """
 
+from __future__ import annotations
+
 from typing import Tuple, TypeAlias
 from enum import IntEnum
 
@@ -24,11 +26,34 @@ class ImageLossType(IntEnum):
     
     SSIM = 1
     MSE = 2
+    COMBINED = 3
+    
+    @staticmethod
+    def from_str(image_loss: str) -> ImageLossType:
+        """
+        Returns the image loss type from the string.
+        
+        Arguments:
+            - image_loss (str) - string to parse
+        """
+        
+        losses = {
+            'ssim': ImageLossType.SSIM,
+            'mse': ImageLossType.MSE,
+            'combined': ImageLossType.COMBINED
+        }
+        if image_loss not in losses:
+            raise ValueError(f'Image loss type {image_loss} is not supported')
+        
+        return losses[image_loss]
 
 class TrainerNetwork:
     """
     Trainer for the generator model.
     """
+    
+    COMBINED_MSE_WEIGHT: float = 0.5
+    COMBINED_SSIM_WEIGHT: float = 0.5
     
     def __init__(self,
                  hyperparams: GeneratorHyperparameters,
@@ -88,6 +113,18 @@ class TrainerNetwork:
         
         return -(1.0 - self._hyperparams.pi_emb) * tf.reduce_mean(tf.math.square(y_true - y_pred))
 
+    def _combined_image_loss(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+        """
+        Loss function for image comparison using structural similarity index and mean squared error.
+        
+        Arguments:
+            - y_true (tf.Tensor) - true image
+            - y_pred (tf.Tensor) - predicted image
+        """
+        
+        return (self.COMBINED_SSIM_WEIGHT * self._ssim_loss(y_true, y_pred) + 
+                self.COMBINED_MSE_WEIGHT * self._mse_image_loss(y_true, y_pred))
+    
     def _threshold_loss(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
         """
         Loss function for embedded vectors comparison 
@@ -115,6 +152,8 @@ class TrainerNetwork:
                 return self._ssim_loss
             case ImageLossType.MSE:
                 return self._mse_image_loss
+            case ImageLossType.COMBINED:
+                return self._combined_image_loss
             case _:
                 raise ValueError(f'Image loss type {image_loss} not supported')
     

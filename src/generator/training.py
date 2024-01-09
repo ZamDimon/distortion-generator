@@ -67,7 +67,7 @@ class GeneratorTrainer:
         self._logger.info('Launching the trainer network...')
         trainer_network.train(
             self._dataset_loader, 
-            image_loss=ImageLossType.MSE)
+            image_loss=ImageLossType.from_str(self._hyperparams.loss_type))
         self._logger.info('Training is successful.')
         
         if model_save_path is not None:

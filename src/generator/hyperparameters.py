@@ -21,7 +21,8 @@ class GeneratorHyperparameters:
         'learning_rate',
         'epochs',
         'batch_size',
-        'validation_split'
+        'validation_split',
+        'loss_type'
     ]
     
     def __init__(self, json_path: Path) -> None:
@@ -94,7 +95,8 @@ class GeneratorHyperparameters:
             'learning_rate': 1e-4,
             'epochs': 100,
             'batch_size': 32,
-            'validation_split': 0.2
+            'validation_split': 0.2,
+            'loss_type': 'mse'
         })
 
 
