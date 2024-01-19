@@ -17,3 +17,5 @@ The project is structured as follows:
 | [`images`](images) | Images with example generations, evaluation plots etc. | 
 | [`hyperparams_embedding.json`](hyperparams_embedding.json) | Hyperparameters for training the embedding model |
 | [`hyperparams_generator.json`](hyperparams_generator.json) | Hyperparameters for training the generator model | 
+| [`dataset`](dataset) | Dataset which was used for training (actually, the portion of it since we do not want to put everything into the repository) |
+| [`models`](models) | Models' weights after the training. Just so you know, the newest versions of the generator are not included since they weigh too much for GitHub to handle. |
