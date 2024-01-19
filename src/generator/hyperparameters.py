@@ -16,12 +16,14 @@ class GeneratorHyperparameters:
     _PARAMS_LIST: List[str] = [
         'meta',
         'input_shape',
+        'grayscale',
         'threshold',
         'pi_emb',
         'learning_rate',
         'epochs',
         'batch_size',
-        'validation_split'
+        'validation_split',
+        'loss_type'
     ]
     
     def __init__(self, json_path: Path) -> None:
@@ -90,11 +92,13 @@ class GeneratorHyperparameters:
         return GeneratorHyperparameters.from_dictionary({
             'meta': Metadata.default().raw(),
             'threshold': 0.5,
+            'grayscale': False,
             'lambda': 0.95,
             'learning_rate': 1e-4,
             'epochs': 100,
             'batch_size': 32,
-            'validation_split': 0.2
+            'validation_split': 0.2,
+            'loss_type': 'mse'
         })
 
 
@@ -104,6 +108,7 @@ class Metadata:
     """
     
     _FIELDS = [
+        'dataset',
         'version',
         'subversion',
     ]
@@ -144,6 +149,7 @@ class Metadata:
         """
         
         return Metadata({
+            'dataset': 'UNKNOWN_DATASET',
             'version': 1,
             'subversion': 1,
         })

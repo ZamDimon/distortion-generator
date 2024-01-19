@@ -1,13 +1,16 @@
 {
     "meta": {
-        "version": "1",
-        "subversion": "1"
+        "dataset": "lfw",
+        "version": "3",
+        "subversion": "4"
     },
-    "input_shape": [28, 28],
+    "input_shape": [160, 160],
+    "grayscale": false,
     "threshold": 0.3,
-    "pi_emb": 0.9,
+    "pi_emb": 0.1,
     "learning_rate": 1e-4,
-    "epochs": 2,
-    "batch_size": 64,
-    "validation_split": 0.2
+    "epochs": 1,
+    "batch_size": 32,
+    "validation_split": 0.2,
+    "loss_type": "combined_sobel"
 }

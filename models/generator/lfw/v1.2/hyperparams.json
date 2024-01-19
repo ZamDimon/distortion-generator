@@ -1,0 +1,19 @@
+{
+    "meta": {
+        "dataset": "lfw",
+        "version": "1",
+        "subversion": "2"
+    },
+    "input_shape": [
+        160,
+        160,
+        3
+    ],
+    "threshold": 0.5,
+    "pi_emb": 0.3,
+    "learning_rate": 0.001,
+    "epochs": 2,
+    "batch_size": 64,
+    "validation_split": 0.2,
+    "loss_type": "combined"
+}

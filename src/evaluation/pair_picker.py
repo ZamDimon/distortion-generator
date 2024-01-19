@@ -36,6 +36,10 @@ class PairPicker:
         return random.choice(labels), random.choice(labels)
     
 class PairValidationGenerator(tf.keras.utils.Sequence):
+    """
+    Class for generating pairs of inputs for validation
+    """
+    
     def __init__(self, X: list, y: list, classes_number: int = 3) -> None:
         """
         Initializes pair generator
@@ -45,6 +49,7 @@ class PairValidationGenerator(tf.keras.utils.Sequence):
         
         labels = np.unique(y)
         np.random.shuffle(labels)
+        labels = sorted(labels, key=lambda x: len(X[y == x]), reverse=True)
         labels = labels[:2*classes_number]
         
         self._positive_classes = labels[:classes_number]

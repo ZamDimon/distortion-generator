@@ -17,6 +17,11 @@ class EmbeddingModel:
         """Returns the initializes model."""
         return self._model
     
+    @property
+    def name(self) -> str:
+        """Returns the name of the model."""
+        return self.raw._name
+    
     def summary(self) -> None:
         """Prints the model summary."""
         self.raw.summary()

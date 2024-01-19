@@ -46,24 +46,28 @@ class GeneratorTrainer:
     def train(self, 
               model_save_path: Path = Path('./models/generator'),
               history_save_path: Path = Path('./images/embedding'),
-              image_save_base_path: Path = Path('./images/generator')
-              ) -> None:
+              image_save_base_path: Path = Path('./images/generator'),
+              grayscale: bool = False
+            ) -> None:
         """
         Trains the generator model.
         
         Arguments:
             - model_save_path (Path) - path to the model file. If None, the model will not be saved. Defaults to None
             - history_save_path (Path) - path to the history file. If None, the history will not be saved. Defaults to None
+            - image_save_base_path (Path) - path to the directory where to save images. If None, the images will not be saved. Defaults to None
         """
         
         trainer_network = TrainerNetwork(
             hyperparams=self._hyperparams,
             generator=self._generator_model,
-            embedding_model=self._embedding_model
+            embedding_model=self._embedding_model,
         )
         
         self._logger.info('Launching the trainer network...')
-        trainer_network.train(self._dataset_loader, image_loss=ImageLossType.MSE)
+        trainer_network.train(
+            self._dataset_loader, 
+            image_loss=ImageLossType.from_str(self._hyperparams.loss_type))
         self._logger.info('Training is successful.')
         
         if model_save_path is not None:
@@ -89,6 +93,6 @@ class GeneratorTrainer:
                 dataset_loader=self._dataset_loader,
                 hyperparams=self._hyperparams
             )
-            evaluator.save_example_images(image_save_base_path)
+            evaluator.save_example_images(image_save_base_path, grayscale=grayscale)
             self._logger.info('Successfully saved example images.')
        

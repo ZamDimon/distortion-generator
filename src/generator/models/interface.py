@@ -4,9 +4,12 @@ General interface for embedding models.
 
 from __future__ import annotations
 
+from typing import Tuple, TypeAlias
 from pathlib import Path
 
 import tensorflow as tf
+
+ImageShape: TypeAlias = Tuple[int, int, int]
 
 class GeneratorModel:
     """
@@ -17,6 +20,11 @@ class GeneratorModel:
     def raw(self) -> tf.keras.models.Model:
         """Returns the initializes model."""
         pass
+    
+    @property
+    def name(self) -> str:
+        """Returns the name of the model."""
+        return self.raw._name
     
     def summary(self) -> None:
         """Prints the model summary."""

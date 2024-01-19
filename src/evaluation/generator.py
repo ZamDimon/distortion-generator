@@ -39,21 +39,22 @@ class GeneratorEvaluator:
                  generator_model: GeneratorModel,
                  embedding_model: EmbeddingModel,
                  dataset_loader: DatasetLoader,
-                 hyperparams: GeneratorHyperparameters) -> None:  
+                 hyperparams: GeneratorHyperparameters = None) -> None:  
         """
         Initializes the generator evaluation.
         
         Arguments:
+            - generator_model (GeneratorModel) - generator model to evaluate
             - embedding_model (EmbeddingModel) - embedding model to evaluate
             - dataset_loader (DatasetLoader) - dataset loader
-            - hyperparams (Hyperparameters) - hyperparameters for the model
+            - hyperparams (Hyperparameters, optional) - hyperparameters for the model if needed. Defaults to None
         """
         
         self._generator_model = generator_model
         self._embedding_model = embedding_model
         self._hyperparams = hyperparams
         
-        _, (X_test, y_test) = dataset_loader.get()
+        (X_test, y_test), _ = dataset_loader.get()
         self._X_test = X_test
         self._y_test = y_test
     
@@ -61,7 +62,8 @@ class GeneratorEvaluator:
                              base_path: Path, 
                              images_to_save: int = 10,
                              image_shape: Tuple[int, int] = (256,256),
-                             labels: List[Any] = None) -> None:
+                             labels: List[Any] = None,
+                             grayscale: bool = True) -> None:
         """
         Saves example images.
         
@@ -70,6 +72,7 @@ class GeneratorEvaluator:
             - images_to_save (int) - number of images to save. Defaults to 10
             - image_shape (Tuple[int, int]) - shape of the image to save. Defaults to (256,256)
             - labels (List[Any]) - list of labels to save. If None, all labels will be saved. Defaults to None
+            - grayscale (bool) - whether to save images in grayscale. Defaults to True
         """
         
         assert len(image_shape) == 2, 'Image shape must be a tuple of 2 elements'
@@ -95,8 +98,17 @@ class GeneratorEvaluator:
             # Saving images
             for i, (x, x_generated) in enumerate(zip(X, X_generated)):
                 real_img_name, generated_img_name = f'{i}_real.png', f'{i}_generated.png'
-                pyplot.imsave(directory_path / real_img_name, np.squeeze(x, axis=-1), cmap='gray')
-                pyplot.imsave(directory_path / generated_img_name, np.squeeze(x_generated, axis=-1), cmap='gray')
+                x = x.numpy()
+                x_generated = x_generated.numpy()
+                
+                if grayscale:
+                    pyplot.imsave(directory_path / real_img_name, np.squeeze(x, axis=-1), cmap='gray')
+                    pyplot.imsave(directory_path / generated_img_name, np.squeeze(x_generated, axis=-1), cmap='gray')
+                    continue
+                
+                pyplot.imsave(directory_path / real_img_name, x)
+                pyplot.imsave(directory_path / generated_img_name, x_generated)   
+                
                 
     @staticmethod
     def _mse_img_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -115,7 +127,7 @@ class GeneratorEvaluator:
         X_generated = self._generator_model.raw.predict(self._X_test, verbose=1)
         
         labels = np.unique(self._y_test)
-        np.random.shuffle(labels)
+        labels = sorted(labels, key=lambda x: len(self._X_test[self._y_test == x]), reverse=True)
         labels = labels[:GeneratorEvaluator.MAX_LABELS_TO_ANALYZE]
         
         X_batches_real: Dict[Any, tf.Tensor] = {}

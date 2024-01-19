@@ -1,5 +1,5 @@
 """
-Module responsible for loading the datasets.
+File responsible for loading the MNIST datasets.
 """
 
 from keras.datasets import mnist
@@ -31,7 +31,7 @@ class MNISTLoader(DatasetLoader):
     
     def show_examples(self) -> Dataset:
         """
-        Shows 9 example images of the dataset displayed on a 3x1 grid.
+        Shows 3 example images of the dataset displayed on a 3x1 grid.
         """
         
         pyplot.style.use('ggplot')
