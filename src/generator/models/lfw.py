@@ -3,14 +3,13 @@ Package for LFW generator model
 """
 
 from __future__ import annotations
-from typing import Tuple, TypeAlias
+from typing import Tuple
 from pathlib import Path
 
 import tensorflow as tf
 
 from src.generator.models.interface import GeneratorModel
-
-ImageShape: TypeAlias = Tuple[int, int, int]
+from src.generator.models.interface import ImageShape
 
 class LFWGeneratorModel(GeneratorModel):
     """
@@ -66,29 +65,35 @@ class LFWGeneratorModel(GeneratorModel):
         return x
 
     
-    def __init__(self, input_shape: ImageShape = (160, 160, 3)) -> None:
+    def __init__(self, input_shape: ImageShape = (160, 160, 3), grayscale: bool = True) -> None:
         """
         Creates a generator that inputs an image and returns yet another image
         
         Parameters:
             - input_shape (ImageShape) - shape of the input image
+            - grayscale (bool) - whether the image is grayscale
         """
         
         inputs = tf.keras.layers.Input(input_shape)
 
-        s1, p1 = self._encoder_block(inputs, 32) # -> 80 x 80
-        s2, p2 = self._encoder_block(p1, 64) # -> 40 x 40
-        s3, p3 = self._encoder_block(p2, 128) # -> 20 x 20
-
+        s1, p1 = self._encoder_block(inputs, 64) # -> 80 x 80
+        s2, p2 = self._encoder_block(p1, 128) # -> 40 x 40
+        s3, p3 = self._encoder_block(p2, 256) # -> 20 x 20
+        s4, p4 = self._encoder_block(p3, 512) # -> 10 x 10
+        
         # Bridge
-        b1 = self._conv_block(p3, 256) # -> 10 x 10
+        b1 = self._conv_block(p4, 1024) # -> 5 x 5
 
         # Decoder
-        d1 = self._decoder_block(b1, s3, 128) # -> 10 x 10
-        d2 = self._decoder_block(d1, s2, 64) # -> 20 x 20
-        d3 = self._decoder_block(d2, s1, 32) # -> 40 x 40
+        d1 = self._decoder_block(b1, s4, 512) # -> 10 x 10
+        d2 = self._decoder_block(d1, s3, 256) # -> 20 x 20
+        d3 = self._decoder_block(d2, s2, 128) # -> 40 x 40
+        d4 = self._decoder_block(d3, s1, 64) # -> 80 x 80
         
-        outputs = tf.keras.layers.Conv2D(3, 1, padding="same", activation="sigmoid", kernel_initializer=tf.keras.initializers.HeUniform())(d3)
+        outputs = tf.keras.layers.Conv2D(1 if grayscale else 3, 1, padding="same", activation="sigmoid", kernel_initializer=tf.keras.initializers.HeUniform())(d4)
+        
+        if grayscale:
+            outputs = tf.keras.layers.Lambda(lambda x: tf.tile(x, [1, 1, 1, 3]))(outputs)
         
         # Returning a retrieved model
         self._model = tf.keras.models.Model(inputs=inputs, outputs=outputs, name='generator')

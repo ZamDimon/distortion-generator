@@ -4,9 +4,12 @@ General interface for embedding models.
 
 from __future__ import annotations
 
+from typing import Tuple, TypeAlias
 from pathlib import Path
 
 import tensorflow as tf
+
+ImageShape: TypeAlias = Tuple[int, int, int]
 
 class GeneratorModel:
     """

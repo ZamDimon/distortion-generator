@@ -3,14 +3,12 @@ Package for MNIST generator model
 """
 
 from __future__ import annotations
-from typing import Tuple, TypeAlias
 from pathlib import Path
 
 import tensorflow as tf
 
 from src.generator.models.interface import GeneratorModel
-
-ImageShape: TypeAlias = Tuple[int, int, int]
+from src.generator.models.interface import ImageShape
 
 class MNISTGeneratorModel(GeneratorModel):
     """

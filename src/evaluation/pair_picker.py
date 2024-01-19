@@ -49,6 +49,7 @@ class PairValidationGenerator(tf.keras.utils.Sequence):
         
         labels = np.unique(y)
         np.random.shuffle(labels)
+        labels = sorted(labels, key=lambda x: len(X[y == x]), reverse=True)
         labels = labels[:2*classes_number]
         
         self._positive_classes = labels[:classes_number]

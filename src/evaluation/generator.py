@@ -39,21 +39,22 @@ class GeneratorEvaluator:
                  generator_model: GeneratorModel,
                  embedding_model: EmbeddingModel,
                  dataset_loader: DatasetLoader,
-                 hyperparams: GeneratorHyperparameters) -> None:  
+                 hyperparams: GeneratorHyperparameters = None) -> None:  
         """
         Initializes the generator evaluation.
         
         Arguments:
+            - generator_model (GeneratorModel) - generator model to evaluate
             - embedding_model (EmbeddingModel) - embedding model to evaluate
             - dataset_loader (DatasetLoader) - dataset loader
-            - hyperparams (Hyperparameters) - hyperparameters for the model
+            - hyperparams (Hyperparameters, optional) - hyperparameters for the model if needed. Defaults to None
         """
         
         self._generator_model = generator_model
         self._embedding_model = embedding_model
         self._hyperparams = hyperparams
         
-        _, (X_test, y_test) = dataset_loader.get()
+        (X_test, y_test), _ = dataset_loader.get()
         self._X_test = X_test
         self._y_test = y_test
     
@@ -126,7 +127,7 @@ class GeneratorEvaluator:
         X_generated = self._generator_model.raw.predict(self._X_test, verbose=1)
         
         labels = np.unique(self._y_test)
-        np.random.shuffle(labels)
+        labels = sorted(labels, key=lambda x: len(self._X_test[self._y_test == x]), reverse=True)
         labels = labels[:GeneratorEvaluator.MAX_LABELS_TO_ANALYZE]
         
         X_batches_real: Dict[Any, tf.Tensor] = {}

@@ -32,16 +32,32 @@ class DatasetHandler(IntEnum):
     MNIST = 0
     LFW = 1
     
-    def dataset_loader(self) -> DatasetLoader:
+    def as_str(self) -> str:
+        """
+        Returns the enum as a string
+        """
+        
+        match self.value:
+            case 0:
+                return 'mnist'
+            case 1:
+                return 'lfw'
+    
+    def dataset_loader(self, grayscale: bool = False) -> DatasetLoader:
         """
         Returns the dataset loader for the enum
+        
+        Parameters:
+            - grayscale (bool, optional) - whether the images should be loaded in grayscale (if needed). Defaults to False
         """
         
         match self.value:
             case 0:
                 return MNISTLoader(expand_dims=True)
             case 1:
-                return LFWCroppedLoader(LFW_CROPPED_BASE_PATH)
+                return LFWCroppedLoader(LFW_CROPPED_BASE_PATH, 
+                                        portion=1.0, 
+                                        grayscale=grayscale)
     
     def empty_embedding_model(self, hyperparams_path: Path = None) -> EmbeddingModel:
         """
@@ -51,6 +67,7 @@ class DatasetHandler(IntEnum):
             - hyperparams_path (Path) - path to the hyperparameters file if needed. 
             If None, the default hyperparameters will be used. Defaults to None
         """
+        
         match self.value:
             case 0:
                 return MNISTEmbeddingModel(EmbeddingHyperparameters(hyperparams_path))
@@ -72,23 +89,33 @@ class DatasetHandler(IntEnum):
             case 1:
                 return FaceNetEmbeddingModel(trainable=trainable)
         
-    def generator_model(self) -> GeneratorModel:
+    def generator_model(self, grayscale: bool = False) -> GeneratorModel:
         """
         Returns the generator model architecture for the enum
+        
+        Parameters:
+            - grayscale (bool, optional) - whether the model should be grayscale. Defaults to False
         """
+        
         match self.value:
             case 0:
                 return MNISTGeneratorModel()
             case 1:
-                return LFWGeneratorModel()
-            
-    def is_grayscale(self) -> bool:
+                return LFWGeneratorModel(grayscale=grayscale)
+
+    def pretrained_generator_model(self, 
+                                   model_path: Path, 
+                                   trainable: bool = False) -> GeneratorModel:
         """
-        Returns whether the dataset is grayscale
+        Returns the generator model architecture for the enum
+        
+        Parameters:
+            - grayscale (bool, optional) - whether the model should be grayscale. Defaults to False
         """
+        
         match self.value:
             case 0:
-                return True
+                return MNISTGeneratorModel.from_path(model_path, trainable=trainable)
             case 1:
-                return False
-        
+                return LFWGeneratorModel.from_path(model_path, trainable=trainable)
+    

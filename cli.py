@@ -28,6 +28,8 @@ from src.evaluation.generator import GeneratorEvaluator
 
 from datasets import DatasetHandler
 
+import tensorflow_io as tfio
+
 # Creating a CLI client
 import typer
 app = typer.Typer(help=('CLI for interacting with', 
@@ -131,28 +133,31 @@ def train_generator_model(
     verbose = VerboseMode(verbose)
     logger = create_logger(verbose)
     
-    dataset_handler = DatasetHandler(dataset)
-    
-    logger.info('Preparing the dataset loader...')
-    loader = dataset_handler.dataset_loader()
-    logger.info('Successfully prepared the dataset loader')
-    
     # Getting hyperparameters
     logger.info('Loading hyperparameters for the generator model...')
     hyperparams = GeneratorHyperparameters(json_path=hyperparams_path)
     logger.info('Successfully loaded the generator hyperparameters.')
     
+    dataset_handler = DatasetHandler(dataset)
+    logger.info('Preparing the dataset loader...')
+    loader = dataset_handler.dataset_loader(grayscale=hyperparams.grayscale)
+    logger.info('Successfully prepared the dataset loader')    
+
     # Initializing the generator model
     logger.info('Loading the generator model...')
-    generator_model = dataset_handler.generator_model()
+    generator_model = dataset_handler.generator_model(grayscale=hyperparams.grayscale)
     logger.info('Using the following generator model:')
-    generator_model.summary()
+    if verbose == VerboseMode.DEBUG:
+        logger.info('Its summary:')
+        generator_model.summary()
     
     # Loading the embedding model
     logger.info('Loading the embedding model...')
     embedding_model = dataset_handler.pretrained_embedding_model(embedding_model_path, trainable=False)
-    logger.info('Successfully loaded the embedding model. Its summary:')
-    embedding_model._model.summary()
+    logger.info('Successfully loaded the embedding model.')
+    if verbose == VerboseMode.DEBUG:
+        logger.info('Its summary:')
+        embedding_model._model.summary()
     
     logger.info('Setting the trainer...')
     trainer = GeneratorTrainer(logger=logger, 
@@ -179,15 +184,15 @@ def train_generator_model(
         model_save_path=model_save_path, 
         history_save_path=history_path,
         image_save_base_path=image_base_path,
-        grayscale=dataset_handler.is_grayscale())
+        grayscale=hyperparams.grayscale)
     hyperparams.save(model_save_path / 'hyperparams.json')
     
     logger.info('Loader successfully finished the training process. Exiting...')
 
 @app.command()
 def show_pca_comparison(
-    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')],
-    generator_model_path: Annotated[Path, typer.Option(help='Path to the generator model file')] = None,
+    generator_model_path: Annotated[Path, typer.Option(help='Path to the generator model file')],
+    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')] = None,
     dataset: Annotated[int, typer.Option(help='Dataset to use. 0 for MNIST, 1 for LFW')] = 0,
     pca_save_path: Annotated[Path, typer.Option(help='Path to the PCA plot file')] = None,
     classes_to_display: Annotated[int, typer.Option(help='Number of classes to display. Defaults to 3')] = 3,
@@ -213,35 +218,47 @@ def show_pca_comparison(
     verbose = VerboseMode(verbose)
     logger = create_logger(verbose)
     
+    # Loading the hyperparameters
+    generator_hyperparams = GeneratorHyperparameters(generator_model_path / 'hyperparams.json')
+    
     # Getting the dataset
-    logger.info('Loading the MNIST dataset...')
-    mnist_loader = MNISTLoader(expand_dims=True)
-    logger.info('Successfully loaded the MNIST dataset')
+    dataset_handler = DatasetHandler(dataset)
+    logger.info(f'Loading the {dataset_handler.as_str()} dataset...')
+    loader = dataset_handler.dataset_loader(grayscale=generator_hyperparams.grayscale)
+    logger.info(f'Successfully loaded the {dataset_handler.as_str()} dataset')
     
     # Loading the embedding model
     logger.info('Loading the embedding model...')
-    embedding_model = MNISTEmbeddingModel.from_path(embedding_model_path, trainable=False)
-    logger.info('Successfully loaded the embedding model. Its summary:')
-    embedding_model.summary()
+    embedding_model = dataset_handler.pretrained_embedding_model(embedding_model_path, trainable=False)
+    logger.info('Successfully loaded the embedding model.')
+    if verbose == VerboseMode.DEBUG:
+        logger.info('Its summary:')
+        embedding_model._model.summary()
     
     # Loading the generator model
     logger.info('Loading the generator model...')
     generator_model = MNISTGeneratorModel.from_path(generator_model_path, trainable=False)
-    logger.info('Successfully loaded the generator model. Its summary:')
-    generator_model.summary()
-    
-    embedding_hyperparams = EmbeddingHyperparameters(embedding_model_path / 'hyperparams.json')
-    generator_hyperparams = GeneratorHyperparameters(generator_model_path / 'hyperparams.json')
+    logger.info('Successfully loaded the generator model.')
+    if verbose == VerboseMode.DEBUG:
+        logger.info('Its summary:')
+        generator_model.summary()
     
     # Setting the save paths if not provided
     if pca_save_path is None:
-        pca_save_path = Path(f'./images/evaluation/pca_embedding_{embedding_hyperparams.meta.version}.{embedding_hyperparams.meta.subversion}_generator_{generator_hyperparams.meta.version}.{generator_hyperparams.meta.subversion}.png')
+        embedding_version = 'facenet'
+        generator_version = f'{generator_hyperparams.meta.version}.{generator_hyperparams.meta.subversion}'
+        
+        if embedding_model_path is not None:
+            embedding_hyperparams = EmbeddingHyperparameters(embedding_model_path / 'hyperparams.json')
+            embedding_version = f'{embedding_hyperparams.meta.version}.{embedding_hyperparams.meta.subversion}'
+            
+        pca_save_path = Path(f'./images/evaluation/{dataset_handler.as_str()}/pca_embedding_{embedding_version}_generator_{generator_version}.png')
     
     # Loading the dataset
-    _, (X_test, y_test) = mnist_loader.get()
+    (X_test, y_test), _ = loader.get()
     y_uniques = np.unique(y_test)
-    random.shuffle(y_uniques)
-    y_selected = y_uniques[:classes_to_display]
+    y_uniques = sorted(y_uniques, key=lambda x: len(X_test[y_test == x]))
+    y_selected = y_uniques[-classes_to_display:]
     X_selected = [X_test[y_test == label] for label in y_selected]
     num_selected = [len(X_selected[i]) for i in range(len(X_selected))]
     X_selected = np.array([item for batch in X_selected for item in batch], dtype=np.float32)
@@ -274,8 +291,9 @@ def show_pca_comparison(
 
 @app.command()
 def analyze_generator_distances(
-    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')],
     generator_model_path: Annotated[Path, typer.Option(help='Path to the generator model file')],
+    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')] = None,
+    dataset: Annotated[int, typer.Option(help='Dataset to use. 0 for MNIST, 1 for LFW')] = 0,
     verbose: Annotated[int, typer.Option(help='Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug')] = 1,
 ) -> None:
     """
@@ -289,41 +307,49 @@ def analyze_generator_distances(
     Arguments:
         - embedding_model_path (str): Path to the embedding model file
         - generator_model_path (str): Path to the generator model file
+        - dataset (int): Dataset to use. 0 for MNIST, 1 for LFW
         - verbose (int): Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug. Defaults to 1.
     """
     
     verbose = VerboseMode(verbose)
     logger = create_logger(verbose)
     
+    dataset_handler = DatasetHandler(dataset)
+
     # Getting the dataset
-    logger.info('Loading the MNIST dataset...')
-    mnist_loader = MNISTLoader(expand_dims=True)
-    logger.info('Successfully loaded the MNIST dataset')
+    logger.info(f'Loading the {dataset_handler.as_str()} dataset...')
+    loader = dataset_handler.dataset_loader(grayscale=False)
+    logger.info(f'Successfully loaded the {dataset_handler.as_str()} dataset')
     
     # Loading the embedding model
     logger.info('Loading the embedding model...')
-    embedding_model = MNISTEmbeddingModel.from_path(embedding_model_path, trainable=False)
-    logger.info('Successfully loaded the embedding model. Its summary:')
-    embedding_model.summary()
+    embedding_model = dataset_handler.pretrained_embedding_model(embedding_model_path, trainable=False)
+    logger.info('Successfully loaded the embedding model.')
+    if verbose == VerboseMode.DEBUG:
+        logger.info('Its summary:')
+        embedding_model.summary()
     
     # Loading the generator model
     logger.info('Loading the generator model...')
-    generator_model = MNISTGeneratorModel.from_path(generator_model_path, trainable=False)
+    generator_model = dataset_handler.pretrained_generator_model(generator_model_path, trainable=False)
     logger.info('Successfully loaded the generator model. Its summary:')
-    generator_model.summary()
+    if verbose == VerboseMode.DEBUG:
+        logger.info('Its summary:')
+        generator_model.summary()
     
     # Creating an evaluator
     logger.info('Creating an evaluator...')
     # We are explicitly ignoring hyperparameters here because we do not need them
-    evaluator = GeneratorEvaluator(generator_model, embedding_model, mnist_loader, None)
+    evaluator = GeneratorEvaluator(generator_model, embedding_model, loader, hyperparams=None)
     evaluator.evaluate_image_distances()
     
     logger.info('Successfully evaluated the generator model. Exiting...')
 
 @app.command()
 def analyze_generator_roc(
-    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')],
     generator_model_path: Annotated[Path, typer.Option(help='Path to the generator model file')],
+    embedding_model_path: Annotated[Path, typer.Option(help='Path to the embedding model file')] = None,
+    dataset: Annotated[int, typer.Option(help='Dataset to use. 0 for MNIST, 1 for LFW')] = 0,
     roc_image_path: Annotated[Path, typer.Option(help='Path to save ROC curve in')] = None,
     classes_to_test: Annotated[int, typer.Option(help='Number of classes to test with')] = 3,
     verbose: Annotated[int, typer.Option(help='Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug')] = 1,
@@ -337,9 +363,10 @@ def analyze_generator_roc(
     4. Evaluate the generator model by calculating the ROC curve.
         
     Arguments:
-        - embedding_model_path (Path): Path to the embedding model file
         - generator_model_path (Path): Path to the generator model file
-        - roc_image_path(Path, optional)
+        - embedding_model_path (Path, optional): Path to the embedding model file. Defaults to None
+        - dataset (int): Dataset to use. 0 for MNIST, 1 for LFW
+        - roc_image_path(Path, optional): Path to save ROC curve in. Defaults to None
         - classes_to_test (int, optional): Number of classes to test authentication system with
         - verbose (int): Whether to print the logs. 0 to set WARNING level only, 1 for INFO, 2 for showing model summary and debug. Defaults to 1.    
     """
@@ -348,32 +375,40 @@ def analyze_generator_roc(
     logger = create_logger(verbose)
     
     # Getting the dataset
-    logger.info('Loading the MNIST dataset...')
-    mnist_loader = MNISTLoader(expand_dims=True)
-    logger.info('Successfully loaded the MNIST dataset')
+    dataset_handler = DatasetHandler(dataset)
+    logger.info(f'Loading the {dataset_handler.as_str()} dataset...')
+    loader = dataset_handler.dataset_loader(grayscale=False)
+    logger.info(f'Successfully loaded the {dataset_handler.as_str()} dataset')
     
     # Loading the embedding model
     logger.info('Loading the embedding model...')
-    embedding_model = MNISTEmbeddingModel.from_path(embedding_model_path, trainable=False)
+    embedding_model = dataset_handler.pretrained_embedding_model(embedding_model_path, trainable=False)
     logger.info('Successfully loaded the embedding model. Its summary:')
     embedding_model.summary()
     
     # Loading the generator model
     logger.info('Loading the generator model...')
-    generator_model = MNISTGeneratorModel.from_path(generator_model_path, trainable=False)
+    generator_model = dataset_handler.pretrained_generator_model(generator_model_path, trainable=False)
     logger.info('Successfully loaded the generator model. Its summary:')
     generator_model.summary()
 
     # Setting the ROC save path if not provided
     if roc_image_path is None:
-        embedding_hyperparams = EmbeddingHyperparameters(embedding_model_path / 'hyperparams.json')
         generator_hyperparams = GeneratorHyperparameters(generator_model_path / 'hyperparams.json')
-        roc_image_path = Path(f'./images/evaluation/roc_embedding_{embedding_hyperparams.meta.version}.{embedding_hyperparams.meta.subversion}_generator_{generator_hyperparams.meta.version}.{generator_hyperparams.meta.subversion}.png')
+        generator_version = f'{generator_hyperparams.meta.version}.{generator_hyperparams.meta.subversion}'        
+        embedding_version = 'facenet'
+        
+        if embedding_model_path is not None:
+            embedding_hyperparams = EmbeddingHyperparameters(embedding_model_path / 'hyperparams.json')
+            embedding_version = f'{embedding_hyperparams.meta.version}.{embedding_hyperparams.meta.subversion}'
+        
+        roc_image_path = Path(f'./images/evaluation/roc_embedding_{embedding_version}_generator_{generator_version}.png')
     
     # Creating an evaluator
     logger.info('Creating an evaluator...')
+    
     # We are explicitly ignoring hyperparameters here because we do not need them
-    evaluator = GeneratorEvaluator(generator_model, embedding_model, mnist_loader, None)
+    evaluator = GeneratorEvaluator(generator_model, embedding_model, loader, hyperparams=None)
     evaluator.build_roc(roc_save_path=roc_image_path, classes_to_test=classes_to_test)
     
     logger.info('Successfully evaluated the generator model. Exiting...')

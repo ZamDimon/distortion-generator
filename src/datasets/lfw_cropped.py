@@ -25,16 +25,17 @@ class LFWCroppedLoader(DatasetLoader):
     # The portion of the dataset to be used for testing
     TESTING_PORTION = 0.2
     
-    def __init__(self, base_dataset_path: Path, portion: float = 1.0) -> None:
+    def __init__(self, base_dataset_path: Path, portion: float = 1.0, grayscale: bool = False) -> None:
         """ Initializes an LFW cropped loader
 
         Args:
             - base_dataset_path (Path): Path to the base dataset folder
             - portion (float, optional): The portion of the dataset to be used. Defaults to 1.0.
+            - grayscale (bool, optional): Whether to load the images in grayscale. Defaults to False.
         """
         
         # Load the LFW dataset
-        X, y = LFWCroppedLoader._load_images_from_folder(base_dataset_path, portion=portion)
+        X, y = LFWCroppedLoader._load_images_from_folder(base_dataset_path, portion=portion, grayscale=grayscale)
         
         # Shuffle the dataset
         joined = list(zip(X, y))
@@ -49,7 +50,7 @@ class LFWCroppedLoader(DatasetLoader):
         self._y_test = np.array(y[training_portion:])
     
     @staticmethod
-    def _load_images_from_folder(folder: Path, portion: float = 1.0) -> Tuple[np.ndarray, List[str]]:
+    def _load_images_from_folder(folder: Path, portion: float = 1.0, grayscale: bool = False) -> Tuple[np.ndarray, List[str]]:
         """
         Loads images from a folder by iterating through all subfiles.
         Folder must contain images ONLY. Otherwise, an error will be raised.
@@ -71,10 +72,17 @@ class LFWCroppedLoader(DatasetLoader):
         with Progress() as progress:
             task = progress.add_task("[blue]Loading images...", total=len(files))
             for i, file in enumerate(files):
-                images[i,:] = (Image
-                               .open(os.path.join(folder, file))
-                               .resize(LFWCroppedLoader.IMAGE_SHAPE[:2]))
-                images[i,:] = preprocess_images(images[i,:])
+                img = (Image
+                            .open(os.path.join(folder, file))
+                            .resize(LFWCroppedLoader.IMAGE_SHAPE[:2]))
+                if grayscale:
+                    img = img.convert('L')
+                    img = np.expand_dims(img, axis=-1)
+                    img = np.repeat(img, 3, axis=-1)
+                    
+                img = np.array(img)
+                img = preprocess_images(img)
+                images[i,:] = img
                 progress.update(task, advance=1)
                 
         return images, labels

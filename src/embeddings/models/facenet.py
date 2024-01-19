@@ -20,7 +20,7 @@ class FaceNetEmbeddingModel(EmbeddingModel):
         Embedding model is a target model that we need to train to make predictions.
         """
         
-        facenet = DeepFace.build_model('Facenet')
+        facenet = DeepFace.build_model('Facenet512')
         
         # Adding unit normalization layer
         input_tensor = facenet.input

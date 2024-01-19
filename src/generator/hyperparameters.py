@@ -16,6 +16,7 @@ class GeneratorHyperparameters:
     _PARAMS_LIST: List[str] = [
         'meta',
         'input_shape',
+        'grayscale',
         'threshold',
         'pi_emb',
         'learning_rate',
@@ -91,6 +92,7 @@ class GeneratorHyperparameters:
         return GeneratorHyperparameters.from_dictionary({
             'meta': Metadata.default().raw(),
             'threshold': 0.5,
+            'grayscale': False,
             'lambda': 0.95,
             'learning_rate': 1e-4,
             'epochs': 100,

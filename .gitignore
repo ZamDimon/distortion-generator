@@ -14,7 +14,12 @@ dataset/lfw_funneled/*
 
 dataset/lfwcrop_color/faces/*
 !dataset/lfwcrop_color/faces/Aaron_Eckhart_0001.ppm
+!dataset/lfwcrop_color/faces/Aaron_Tippin_0001.ppm
+!dataset/lfwcrop_color/faces/Alan_Ball_0002.ppm
 !dataset/lfwcrop_color/faces/Abbas_Kiarostami_0001.ppm
+
+# Ignoring models
+models/generator/lfw/*
 
 # Ignoring example images
 images/generator/lfw/v1.1/*
@@ -24,6 +29,22 @@ images/generator/lfw/v1.1/*
 images/generator/lfw/v1.2/*
 !images/generator/lfw/v1.2/Arnold_Schwarzenegger
 !images/generator/lfw/v1.2/Boris_Becker
+
+images/generator/lfw/v1.3/*
+!images/generator/lfw/v1.3/Arnold_Schwarzenegger
+!images/generator/lfw/v1.3/Boris_Becker
+
+images/generator/lfw/v2.1/*
+!images/generator/lfw/v2.1/Arnold_Schwarzenegger
+!images/generator/lfw/v2.1/Boris_Becker
+
+images/generator/lfw/v3.2/*
+!images/generator/lfw/v3.2/Arnold_Schwarzenegger
+!images/generator/lfw/v3.2/Boris_Becker
+
+images/generator/lfw/v3.4/*
+!images/generator/lfw/v3.4/Arnold_Schwarzenegger
+!images/generator/lfw/v3.4/Boris_Becker
 
 # C extensions
 *.so
