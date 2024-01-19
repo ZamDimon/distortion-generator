@@ -1,7 +1,9 @@
 # :framed_picture: :interrobang: Distortion Generator
 
-Neural network for creating distortion while keeping embeddings as close as possible. Part of tbe
-research paper under the supervision of Prof. Alexander Kuznetsov.
+Neural network for creating distortion while keeping embeddings as close as possible. Part of the
+research paper _"Unrecognizable Yet Identifiable: Image Distortion with Preserved Embeddings."_
+
+The code is written in [_TensorFlow v2.12_](https://www.tensorflow.org/).
 
 ![Example Generations](images/meta/example_generations.png)
 
@@ -10,8 +12,8 @@ research paper under the supervision of Prof. Alexander Kuznetsov.
 The project is structured as follows:
 | File/Folder | Description |
 | ----------- | ----------- |
-| [`embedding.ipynb`](embedding.ipynb) | Notebook for creating the embedding neural network using Triplet Loss function |
-| [`generator.ipynb`](generator.ipynb) | Notebook for training the generator neural network — the central model of our research |
-| [`evaluation.ipynb`](evaluation.ipynb) | Notebook for estimating accuracy of proposed models |
-| [`models.ipynb`](models) | Folder containing trained models |
-| [`images`](images) | Folder containing example images after applying the generator model |
+| [`cli.py`](cli.py) | CLI for running training or evaluation |
+| [`src`](src) | All source files for training and evaluating the models | 
+| [`images`](images) | Images with example generations, evaluation plots etc. | 
+| [`hyperparams_embedding.json`](hyperparams_embedding.json) | Hyperparameters for training the embedding model |
+| [`hyperparams_generator.json`](hyperparams_generator.json) | Hyperparameters for training the generator model | 
