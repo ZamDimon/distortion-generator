@@ -1,7 +1,7 @@
 <h1 align="center"> :framed_picture: :interrobang: Distortion Generator </h1>
 
 <p align="center">
-  | <a href="https://arxiv.org/abs/2401.15048">[arXiv]</a> | <a href="https://paperswithcode.com/paper/unrecognizable-yet-identifiable-image">[Papers with Code]</a> | <a href="#citation">[Citation]</a>  |
+  | <a href="https://arxiv.org/abs/2401.15048">[Journal Paper]</a> | <a href="https://arxiv.org/abs/2402.02540">[Conference Paper]</a> | <a href="https://paperswithcode.com/paper/unrecognizable-yet-identifiable-image">[Papers with Code]</a> | <a href="#citation">[Citation]</a>  |
 
 Neural network for creating distortion while keeping embeddings as close as possible. Part of the research paper _"Unrecognizable Yet Identifiable: Image Distortion with Preserved Embeddings."_
 
